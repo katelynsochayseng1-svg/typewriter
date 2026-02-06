@@ -14,90 +14,90 @@
             font-family: 'Special Elite', serif;
         }
 
-        /* Container for all pages */
-        #desk {
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-            padding-bottom: 100px;
-        }
+        #desk { display: flex; flex-direction: column; gap: 40px; padding-bottom: 120px; }
 
-        /* Short Bond Paper (8.5 x 11) Dimensions */
         .paper {
-            width: 612px; 
-            height: 792px;
+            width: 612px; height: 792px; /* Short Bond Paper Ratio */
             background-color: #f4ecd8;
-            background-image: url("image_7308c0.jpg"); 
             background-size: 100% 100%;
-            background-position: center;
             padding: 110px 70px 70px 85px; 
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            font-size: 20px;
-            line-height: 1.8; 
-            color: rgba(40, 40, 40, 0.9);
-            outline: none; 
-            white-space: pre-wrap; 
-            position: relative;
-            border: none; 
-            overflow: hidden;
-            box-sizing: border-box;
-            flex-shrink: 0;
+            font-size: 20px; line-height: 1.8; color: rgba(40, 40, 40, 0.9);
+            outline: none; white-space: pre-wrap; position: relative;
+            border: none; overflow: hidden; box-sizing: border-box; flex-shrink: 0;
         }
 
         .strike-container {
-            display: inline-flex; position: relative;
-            vertical-align: bottom; width: 1ch;
-            pointer-events: none; user-select: none;
+            display: inline-flex; position: relative; vertical-align: bottom;
+            width: 1ch; pointer-events: none; user-select: none;
         }
-
         .base-char { opacity: 0.5; }
         .correction-char {
-            position: absolute; left: 0; top: 0;
-            color: #000 !important; font-weight: 900;
-            text-shadow: 0.5px 0px 0px #000;
+            position: absolute; left: 0; top: 0; color: #000 !important;
+            font-weight: 900; text-shadow: 0.5px 0px 0px #000;
         }
 
+        /* Design Picker Styles */
         #overlay {
             position: fixed; inset: 0; background: #222; color: #f4ecd8;
             display: flex; flex-direction: column; justify-content: center;
             align-items: center; z-index: 100;
         }
+        .design-options { display: flex; gap: 20px; margin-top: 20px; }
+        .design-choice {
+            width: 120px; height: 155px; border: 2px solid #555; cursor: pointer;
+            background-size: cover; background-position: center; transition: 0.3s;
+        }
+        .design-choice:hover { border-color: #f4ecd8; transform: scale(1.05); }
+        .design-choice.selected { border-color: #f4ecd8; box-shadow: 0 0 15px #f4ecd8; }
 
         .controls {
-            position: fixed; bottom: 20px;
-            display: flex; gap: 15px; z-index: 10;
-            background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 50px;
+            position: fixed; bottom: 20px; display: flex; gap: 10px;
+            z-index: 10; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 5px;
         }
-
         button {
-            padding: 10px 20px; font-family: 'Special Elite'; font-size: 1rem;
-            cursor: pointer; border: 2px solid #f4ecd8; background: transparent; color: #f4ecd8;
-            transition: 0.3s; border-radius: 5px;
+            padding: 8px 15px; font-family: 'Special Elite'; cursor: pointer;
+            border: 1px solid #f4ecd8; background: transparent; color: #f4ecd8;
         }
         button:hover { background: #f4ecd8; color: #1a1a1a; }
+        .btn-danger { border-color: #ff5555; color: #ff5555; }
+        .btn-danger:hover { background: #ff5555; color: #fff; }
     </style>
 </head>
 <body>
 
 <div id="overlay">
     <h1>MECHANICAL TYPE</h1>
-    <p>Precision Bond Paper size enabled.</p>
-    <button id="start">LOAD PAPER</button>
+    <p>Choose your stationery design:</p>
+    <div class="design-options">
+        <div class="design-choice" data-img="image1.jpg" style="background-image: url('image1.jpg');"></div>
+        <div class="design-choice" data-img="image2.jpg" style="background-image: url('image2.jpg');"></div>
+        <div class="design-choice" data-img="image3.jpg" style="background-image: url('image3.jpg');"></div>
+    </div>
+    <p><button id="start" style="margin-top: 30px;">LOAD PAPER</button></p>
 </div>
 
-<div id="desk">
-    <div id="page-1" class="paper" contenteditable="true" spellcheck="false"></div>
-</div>
+<div id="desk"></div>
 
 <div class="controls">
-    <button id="addPageBtn">NEW PAGE</button>
-    <button id="saveBtn">SAVE CURRENT PAGE</button>
+    <button id="addPageBtn">+ NEW PAGE</button>
+    <button id="removePageBtn" class="btn-danger">× REMOVE LAST</button>
+    <button id="saveBtn">💾 SAVE CURRENT</button>
 </div>
 
 <script>
-    let pageCount = 1;
-    let activePaper = document.getElementById('page-1');
+    let selectedBg = "image1.jpg";
+    let activePaper = null;
     const sounds = { clack: new Audio('clack.mp3'), ding: new Audio('ding.mp3') };
+
+    // Design Selection Logic
+    document.querySelectorAll('.design-choice').forEach(choice => {
+        choice.addEventListener('click', () => {
+            document.querySelectorAll('.design-choice').forEach(c => c.classList.remove('selected'));
+            choice.classList.add('selected');
+            selectedBg = choice.getAttribute('data-img');
+        });
+    });
 
     function playSound(type) {
         try {
@@ -109,33 +109,42 @@
         } catch(e) {}
     }
 
-    // Start App
+    // Start App with first page
     document.getElementById('start').addEventListener('click', () => {
         document.getElementById('overlay').style.display = 'none';
-        activePaper.focus();
+        createPage();
     });
 
-    // Page Break Logic (Add New Page)
+    function createPage() {
+        const page = document.createElement('div');
+        page.className = 'paper';
+        page.style.backgroundImage = `url('${selectedBg}')`;
+        page.contentEditable = "true";
+        page.spellcheck = false;
+        document.getElementById('desk').appendChild(page);
+        attachTypewriterLogic(page);
+        page.focus();
+        page.scrollIntoView({ behavior: 'smooth' });
+        activePaper = page;
+    }
+
     document.getElementById('addPageBtn').addEventListener('click', () => {
         playSound('ding');
-        pageCount++;
-        const newPage = document.createElement('div');
-        newPage.id = `page-${pageCount}`;
-        newPage.className = 'paper';
-        newPage.contentEditable = "true";
-        newPage.spellcheck = false;
-        
-        document.getElementById('desk').appendChild(newPage);
-        activePaper = newPage;
-        newPage.focus();
-        newPage.scrollIntoView({ behavior: 'smooth' });
-        attachTypewriterLogic(newPage);
+        createPage();
+    });
+
+    document.getElementById('removePageBtn').addEventListener('click', () => {
+        const pages = document.querySelectorAll('.paper');
+        if (pages.length > 1) {
+            pages[pages.length - 1].remove();
+            activePaper = document.querySelector('.paper:last-child');
+            activePaper.focus();
+        }
     });
 
     function attachTypewriterLogic(element) {
         element.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') { playSound('ding'); return; }
-
             const sel = window.getSelection();
             if (!sel.rangeCount) return;
             let range = sel.getRangeAt(0);
@@ -159,7 +168,7 @@
                     wrapper.className = 'strike-container';
                     wrapper.contentEditable = "false"; 
                     wrapper.innerHTML = `<span class="base-char">${charToCover}</span><span class="correction-char">${e.key}</span>`;
-
+                    
                     const deleteRange = document.createRange();
                     deleteRange.setStart(container, offset);
                     deleteRange.setEnd(container, offset + 1);
@@ -175,34 +184,19 @@
                 }
             }
         });
-
-        // Set active paper on focus
-        element.addEventListener('focus', () => {
-            activePaper = element;
-        });
+        element.addEventListener('focus', () => { activePaper = element; });
     }
 
-    // Initialize first page
-    attachTypewriterLogic(activePaper);
-
-    // Save logic
     document.getElementById('saveBtn').addEventListener('click', () => {
+        if (!activePaper) return;
         const btn = document.getElementById('saveBtn');
         btn.innerText = "CAPTURING...";
-
-        html2canvas(activePaper, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: null
-        }).then(canvas => {
+        html2canvas(activePaper, { scale: 2, useCORS: true }).then(canvas => {
             const link = document.createElement('a');
-            link.download = `typewriter-page-${activePaper.id}.png`;
+            link.download = 'typewritten-page.png';
             link.href = canvas.toDataURL("image/png");
             link.click();
-            btn.innerText = "SAVE CURRENT PAGE";
-        }).catch(err => {
-            console.error(err);
-            btn.innerText = "SAVE ERROR";
+            btn.innerText = "💾 SAVE CURRENT";
         });
     });
 </script>

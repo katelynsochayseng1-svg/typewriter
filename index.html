@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Typewriter - Precision Overprint</title>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            background-image: radial-gradient(circle, rgba(255,245,200,0.15) 0%, rgba(0,0,0,0.9) 80%);
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; overflow: hidden;
+        }
+
+        #paper {
+            width: 600px; /* Fixed width to match the aspect ratio of the Canva image */
+            height: 85vh;
+            background-color: #f4ecd8;
+            /* Update 'background.jpg' to the actual filename of your Canva export */
+            background-image: url("image_7308c0.jpg"); 
+            background-size: cover;
+            background-position: center;
+            /* Adjust padding to fit the text within the white space of your design */
+            padding: 120px 80px 80px 80px; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            font-family: 'Special Elite', serif;
+            font-size: 20px; /* Slightly smaller to fit the handwritten aesthetic */
+            line-height: 1.8; 
+            color: rgba(40, 40, 40, 0.9);
+            outline: none; white-space: pre-wrap; position: relative;
+            border: none; overflow-y: auto;
+        }
+
+        /* The Strike-over styling */
+        .strike-container {
+            display: inline-flex;
+            position: relative;
+            vertical-align: bottom;
+            width: 1ch;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .base-char {
+            opacity: 0.5;
+        }
+
+        .correction-char {
+            position: absolute;
+            left: 0; top: 0;
+            color: #000 !important;
+            font-weight: 900;
+            text-shadow: 0.5px 0px 0px #000;
+        }
+
+        #overlay {
+            position: fixed; inset: 0; background: #222; color: #f4ecd8;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; z-index: 100; font-family: 'Special Elite', serif;
+        }
+
+        button {
+            padding: 15px 40px; font-family: 'Special Elite'; font-size: 1.5rem;
+            cursor: pointer; border: 2px solid #f4ecd8; background: transparent; color: #f4ecd8;
+        }
+    </style>
+</head>
+<body>
+
+<div id="overlay">
+    <h1>MECHANICAL TYPE</h1>
+    <p>Type directly onto your design.</p>
+    <button id="start">LOAD PAPER</button>
+</div>
+
+<div id="paper" contenteditable="true" spellcheck="false"></div>
+
+<script>
+    const paper = document.getElementById('paper');
+    const sounds = { clack: new Audio('clack.mp3'), ding: new Audio('ding.mp3') };
+
+    function playSound(type) {
+        try {
+            const s = sounds[type].cloneNode();
+            const offSets = { clack: 2.2, ding: 0.2 };
+            s.currentTime = offSets[type];
+            s.volume = 0.9;
+            s.play();
+            setTimeout(() => { s.pause(); s.remove(); }, 700);
+        } catch(e) {}
+    }
+
+    document.getElementById('start').addEventListener('click', () => {
+        Object.values(sounds).forEach(s => {
+            s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
+        });
+        document.getElementById('overlay').style.display = 'none';
+        paper.focus();
+    });
+
+    paper.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            playSound('ding');
+            return;
+        }
+
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        let range = sel.getRangeAt(0);
+
+        if (e.key === 'Backspace') {
+            e.preventDefault();
+            playSound('clack');
+            sel.modify("move", "backward", "character");
+            return;
+        }
+
+        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+            const container = range.startContainer;
+            const offset = range.startOffset;
+
+            if (container.nodeType === Node.TEXT_NODE && offset < container.length) {
+                e.preventDefault();
+                playSound('clack');
+
+                const charToCover = container.textContent[offset];
+                const wrapper = document.createElement('span');
+                wrapper.className = 'strike-container';
+                wrapper.contentEditable = "false"; 
+                wrapper.innerHTML = `<span class="base-char">${charToCover}</span><span class="correction-char">${e.key}</span>`;
+
+                const deleteRange = document.createRange();
+                deleteRange.setStart(container, offset);
+                deleteRange.setEnd(container, offset + 1);
+                deleteRange.deleteContents();
+                
+                range.insertNode(wrapper);
+                const resetNode = document.createTextNode("");
+                wrapper.after(resetNode);
+
+                range.setStartAfter(wrapper);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            } else {
+                playSound('clack');
+            }
+        }
+    });
+</script>
+</body>
+</html>

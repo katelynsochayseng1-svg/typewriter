@@ -4,34 +4,33 @@
     <meta charset="UTF-8">
     <title>Typewriter - Precision Overprint</title>
     <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             background-color: #1a1a1a;
             background-image: radial-gradient(circle, rgba(255,245,200,0.15) 0%, rgba(0,0,0,0.9) 80%);
-            display: flex; justify-content: center; align-items: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             height: 100vh; margin: 0; overflow: hidden;
         }
 
         #paper {
-            width: 600px; /* Fixed width to match the aspect ratio of the Canva image */
+            width: 600px;
             height: 85vh;
             background-color: #f4ecd8;
-            /* Update 'background.jpg' to the actual filename of your Canva export */
+            /* Using your standard JPG filename */
             background-image: url("image_7308c0.jpg"); 
             background-size: cover;
             background-position: center;
-            /* Adjust padding to fit the text within the white space of your design */
             padding: 120px 80px 80px 80px; 
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
             font-family: 'Special Elite', serif;
-            font-size: 20px; /* Slightly smaller to fit the handwritten aesthetic */
+            font-size: 20px;
             line-height: 1.8; 
             color: rgba(40, 40, 40, 0.9);
             outline: none; white-space: pre-wrap; position: relative;
-            border: none; overflow-y: auto;
+            border: none; overflow-y: auto; box-sizing: border-box;
         }
 
-        /* The Strike-over styling */
         .strike-container {
             display: inline-flex;
             position: relative;
@@ -41,10 +40,7 @@
             user-select: none;
         }
 
-        .base-char {
-            opacity: 0.5;
-        }
-
+        .base-char { opacity: 0.5; }
         .correction-char {
             position: absolute;
             left: 0; top: 0;
@@ -59,9 +55,22 @@
             align-items: center; z-index: 100; font-family: 'Special Elite', serif;
         }
 
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+
         button {
-            padding: 15px 40px; font-family: 'Special Elite'; font-size: 1.5rem;
+            padding: 10px 30px; font-family: 'Special Elite'; font-size: 1.2rem;
             cursor: pointer; border: 2px solid #f4ecd8; background: transparent; color: #f4ecd8;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #f4ecd8;
+            color: #1a1a1a;
         }
     </style>
 </head>
@@ -74,6 +83,10 @@
 </div>
 
 <div id="paper" contenteditable="true" spellcheck="false"></div>
+
+<div class="controls">
+    <button id="saveBtn">SAVE IMAGE</button>
+</div>
 
 <script>
     const paper = document.getElementById('paper');
@@ -146,6 +159,28 @@
                 playSound('clack');
             }
         }
+    });
+
+    // Save functionality
+    document.getElementById('saveBtn').addEventListener('click', () => {
+        const btn = document.getElementById('saveBtn');
+        btn.innerText = "CAPTURING...";
+
+        html2canvas(paper, {
+            scale: 2, // High-res export
+            useCORS: true,
+            logging: false,
+            backgroundColor: null
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'my-typewriter-work.png';
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+            btn.innerText = "SAVE IMAGE";
+        }).catch(err => {
+            console.error(err);
+            btn.innerText = "SAVE ERROR";
+        });
     });
 </script>
 </body>
